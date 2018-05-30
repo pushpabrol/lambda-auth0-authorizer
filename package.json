@@ -1,10 +1,10 @@
 {
   "name": "lambda-auth0-authenticator",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "An AWS Lambda function to provide a Custom Authenticator for AWS API Gateway that verifies RS* signed tokens",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/lambda-local --timeout 300 --lambdapath index.js --eventpath event.json",
+    "test": "lambda-local --timeout 300 --lambda-path index.js --event-path event.json",
     "bundle": "rm -f custom-authorizer.zip ; zip custom-authorizer.zip -r *.js *.json node_modules/"
   },
   "author": "Jason Haines",
@@ -12,17 +12,17 @@
   "dependencies": {
     "auth0": "^2.5.0",
     "bluebird": "^3.4.6",
-    "dotenv": "^2.0.0",
-    "jsonwebtoken": "^7.4.1",
+    "dotenv": "^5.0.1",
+    "jsonwebtoken": "^8.2.1",
     "jwks-rsa": "^1.1.1"
   },
   "devDependencies": {
-    "aws-sdk": "2.2.48",
-    "lambda-local": "0.0.9"
+    "aws-sdk": "^2.2.48",
+    "lambda-local": "^1.4.8"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pushpabrol/lambda-jwt-rsa-authorizer.git"
+    "url": "git+https://github.com/auth0-samples/lambda-jwt-rsa-authorizer.git"
   },
   "keywords": [
     "aws",
@@ -33,7 +33,7 @@
     "lambda"
   ],
   "bugs": {
-    "url": "https://github.com/pushpabrol/lambda-jwt-rsa-authorizer/issues"
+    "url": "https://github.com/auth0-samples/lambda-jwt-rsa-authorizer/issues"
   },
-  "homepage": "https://github.com/pushpabrol/lambda-jwt-rsa-authorizer#readme"
+  "homepage": "https://github.com/auth0-samples/lambda-jwt-rsa-authorizer#readme"
 }

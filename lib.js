@@ -1,85 +1,70 @@
-'use strict';
-
 require('dotenv').config({ silent: true });
-var jwksClient = require('jwks-rsa');
-var jwt = require('jsonwebtoken');
 
-var getPolicyDocument = function (effect, resource) {
+const jwksClient = require('jwks-rsa');
+const jwt = require('jsonwebtoken');
+const util = require('util');
 
-    var policyDocument = {};
-    policyDocument.Version = '2012-10-17'; // default version
-    policyDocument.Statement = [];
-    var statementOne = {};
-    statementOne.Action = 'execute-api:Invoke'; // default action
-    statementOne.Effect = effect;
-    statementOne.Resource = resource;
-    policyDocument.Statement[0] = statementOne;
+const getPolicyDocument = (effect, resource) => {
+    const policyDocument = {
+        Version: '2012-10-17', // default version
+        Statement: [{
+            Action: 'execute-api:Invoke', // default action
+            Effect: effect,
+            Resource: resource,
+        }]
+    };
     return policyDocument;
 }
 
 
 // extract and return the Bearer Token from the Lambda event parameters
-var getToken = function (params) {
-    var token;
-
+const getToken = (params) => {
     if (!params.type || params.type !== 'TOKEN') {
-        throw new Error("Expected 'event.type' parameter to have value TOKEN");
+        throw new Error('Expected "event.type" parameter to have value "TOKEN"');
     }
 
-    var tokenString = params.authorizationToken;
+    const tokenString = params.authorizationToken;
     if (!tokenString) {
-        throw new Error("Expected 'event.authorizationToken' parameter to be set");
+        throw new Error('Expected "event.authorizationToken" parameter to be set');
     }
 
-    var match = tokenString.match(/^Bearer (.*)$/);
+    const match = tokenString.match(/^Bearer (.*)$/);
     if (!match || match.length < 2) {
-        throw new Error("Invalid Authorization token - '" + tokenString + "' does not match 'Bearer .*'");
+        throw new Error(`Invalid Authorization token - ${tokenString} does not match "Bearer .*"`);
     }
     return match[1];
 }
 
-module.exports.authenticate = function (params, cb) {
-    console.log(params);
-    var token = getToken(params);
+const jwtOptions = {
+    audience: process.env.AUDIENCE,
+    issuer: process.env.TOKEN_ISSUER
+};
 
-    var client = jwksClient({
+module.exports.authenticate = (params) => {
+    console.log(params);
+    const token = getToken(params);
+
+    const decoded = jwt.decode(token, { complete: true });
+    if (!decoded || !decoded.header || !decoded.header.kid) {
+        throw new Error('invalid token');
+    }
+
+    const client = jwksClient({
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 10, // Default value
         jwksUri: process.env.JWKS_URI
     });
 
-    var decoded = jwt.decode(token, { complete: true });
-    var kid = decoded.header.kid;
-    client.getSigningKey(kid, function (err, key) {
-        if(err)
-        {
-             cb(err);
-        }
-        else 
-        {
-        var signingKey = key.publicKey || key.rsaPublicKey;
-        jwt.verify(token, signingKey, { audience: process.env.AUDIENCE, issuer: process.env.TOKEN_ISSUER },
-            function (err, decoded) {
-                if (err) {
-                    cb(err);
-
-                }
-                else {
-
-                    cb(null, {
-                        principalId: decoded.sub,
-                        policyDocument: getPolicyDocument('Allow', params.methodArn),
-                        context: {
-                            scope: decoded.scope
-                        }
-                    });
-                }
-            });
-    }
-
-    });
-
-
-
+    const getSigningKey = util.promisify(client.getSigningKey);
+    return getSigningKey(decoded.header.kid)
+        .then((key) => {
+            const signingKey = key.publicKey || key.rsaPublicKey;
+            return jwt.verify(token, signingKey, jwtOptions);
+        })
+        .then((decoded)=> ({
+            principalId: decoded.sub,
+            policyDocument: getPolicyDocument('Allow', params.methodArn),
+            context: { scope: decoded.scope }
+        }));
 }

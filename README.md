@@ -1,6 +1,6 @@
 # AWS API Gateway Custom Authorizer for RS256 JWTs
 
-An AWS API Gateway [Custom Authorizer](http://docs.aws.amazon.com/apigateway/latest/developerguide/use-custom-authorizer.html) that authorizes API requests by requiring 
+An AWS API Gateway [Custom Authorizer](http://docs.aws.amazon.com/apigateway/latest/developerguide/use-custom-authorizer.html) that authorizes API requests by requiring
 that the OAuth2 [bearer token](https://tools.ietf.org/html/rfc6750) is a JWT that can be validated using the RS256 (asymmetric) algorithm with a public key that is obtained from a [JWKS](https://tools.ietf.org/html/rfc7517) endpoint.
 
 ## About
@@ -13,7 +13,7 @@ One popular use case is to provide an interface to AWS Lambda functions to deliv
 
 ### What are "Custom Authorizers"?
 
-In February 2016 Amazon 
+In February 2016 Amazon
 [announced](https://aws.amazon.com/blogs/compute/introducing-custom-authorizers-in-amazon-api-gateway/)
 a new feature for API Gateway -
 [Custom Authorizers](http://docs.aws.amazon.com/apigateway/latest/developerguide/use-custom-authorizer.html). This allows a Lambda function to be invoked prior to an API Gateway execution to perform custom authorization of the request, rather than using AWS's built-in authorization. This code can then be isolated to a single centralized Lambda function rather than replicated across every backend Lambda function.
@@ -181,7 +181,7 @@ Now we can finally create the lamda function itself in AWS. Start by going to [c
 
 * Name: `jwtRsaCustomAuthorizer`
 * Description: `JWT RSA Custom Authorizer`
-* Runtime: `Node.js 4.3`
+* Runtime: `Node.js 8.10`
 * _Lambda function code_
     * Code entry type: `Update a .ZIP file`
     * Function package: (upload the `custom-authorizer.zip` file created earlier)
@@ -230,7 +230,7 @@ You can then test the new custom authorizer by providing an **Identity Token** a
 ```
 Bearer ACCESS_TOKEN
 ```
-  
+
 A successful test will look something like:
 
 ```
@@ -241,14 +241,14 @@ Policy
     "Version": "2012-10-17",
     "Statement": [
         {
-        "Sid": "Stmt1459758003000",
-        "Effect": "Allow",
-        "Action": [
-            "execute-api:Invoke"
-        ],
-        "Resource": [
-            "arn:aws:execute-api:*"
-        ]
+            "Sid": "Stmt1459758003000",
+            "Effect": "Allow",
+            "Action": [
+                "execute-api:Invoke"
+            ],
+            "Resource": [
+                "arn:aws:execute-api:*"
+            ]
         }
     ]
 }
@@ -305,7 +305,7 @@ The above command is performed using the `GET` method.
 
 ```
 fetch( 'INVOKE_URL/your/resource', { method: 'GET', headers: { Authorization : 'Bearer ACCESS_TOKEN' }}).then(response => { console.log( response );});
-```    
+```
 
 
 ---
