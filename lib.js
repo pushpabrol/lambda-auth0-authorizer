@@ -41,7 +41,6 @@ const jwtOptions = {
 };
 
 module.exports.authenticate = (params) => {
-    console.log(params);
     const token = getToken(params);
 
     const decoded = jwt.decode(token, { complete: true });
@@ -62,7 +61,7 @@ module.exports.authenticate = (params) => {
             const signingKey = key.publicKey || key.rsaPublicKey;
             return jwt.verify(token, signingKey, jwtOptions);
         })
-        .then((decoded)=> ({
+        .then((decoded) => ({
             principalId: decoded.sub,
             policyDocument: getPolicyDocument('Allow', params.methodArn),
             context: { scope: decoded.scope }
