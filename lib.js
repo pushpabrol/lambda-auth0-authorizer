@@ -49,13 +49,6 @@ module.exports.authenticate = (params) => {
         throw new Error('invalid token');
     }
 
-    const client = jwksClient({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 10, // Default value
-        jwksUri: process.env.JWKS_URI
-    });
-
     const getSigningKey = util.promisify(client.getSigningKey);
     return getSigningKey(decoded.header.kid)
         .then((key) => {
@@ -68,3 +61,10 @@ module.exports.authenticate = (params) => {
             context: { scope: decoded.scope }
         }));
 }
+
+ const client = jwksClient({
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 10, // Default value
+        jwksUri: process.env.JWKS_URI
+  });
