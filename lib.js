@@ -40,6 +40,13 @@ const jwtOptions = {
     issuer: process.env.TOKEN_ISSUER
 };
 
+const client = jwksClient({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 10, // Default value
+    jwksUri: process.env.JWKS_URI
+});
+
 module.exports.authenticate = (params) => {
     console.log(params);
     const token = getToken(params);
