@@ -4,7 +4,14 @@ const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
 const util = require('util');
 
-const getPolicyDocument = (effect, resource) => {
+const getPolicyDocument = (effect, methodArn) => {
+
+    // parse the ARN from the incoming resource
+    var methodArnComponents = methodArn.split(':');
+    var apiOptions = methodArnComponents[5].split('/');
+    methodArnComponents[5] = [apiOptions[0], apiOptions[1], "*"].join('/');
+    var resource = methodArnComponents.join(':');
+
     const policyDocument = {
         Version: '2012-10-17', // default version
         Statement: [{
