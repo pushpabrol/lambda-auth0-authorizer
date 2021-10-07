@@ -56,15 +56,19 @@ module.exports.authenticate = (params) => {
             return jwt.verify(token, signingKey, jwtOptions);
         })
         .then((decoded)=> ({
-            principalId: decoded.sub,
-            policyDocument: getPolicyDocument('Allow', params.methodArn),
-            context: { scope: decoded.scope }
+            // Payload 2 format
+            isAuthorized: true,
+            context: {
+                scope: decoded.scope,
+                // Include custom Vestwell JWT claims.  These are namespaced as required by Auth0
+                vwTpaId: decoded['https://auth.vestwell.com'].vwTpaId
+            }
         }));
 }
 
- const client = jwksClient({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 10, // Default value
-        jwksUri: process.env.JWKS_URI
-  });
+const client = jwksClient({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 10, // Default value
+    jwksUri: process.env.JWKS_URI
+});
