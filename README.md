@@ -181,7 +181,7 @@ Now we can finally create the lamda function itself in AWS. Start by going to [c
 
 * Name: `jwtRsaCustomAuthorizer`
 * Description: `JWT RSA Custom Authorizer`
-* Runtime: `Node.js 8.10`
+* Runtime: `Node.js 14`
 * _Lambda function code_
     * Code entry type: `Update a .ZIP file`
     * Function package: (upload the `custom-authorizer.zip` file created earlier)
