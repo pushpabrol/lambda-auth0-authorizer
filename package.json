@@ -10,6 +10,7 @@
   "author": "Jason Haines",
   "license": "Apache-2.0",
   "dependencies": {
+    "@sentry/serverless": "^7.74.1",
     "auth0": "^2.5.0",
     "bluebird": "^3.4.6",
     "dotenv": "^5.0.1",
