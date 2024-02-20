@@ -3,7 +3,7 @@ const Sentry = require("@sentry/serverless");
 
 Sentry.AWSLambda.init({
   dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.01,
 });
 
 let data;
