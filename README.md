@@ -22,10 +22,10 @@ a new feature for API Gateway -
 
 This package gives you the code for a custom authorizer that will, with a little configuration, perform authorization on AWS API Gateway requests via the following:
 
-* It confirms that an OAuth2 bearer token has been passed via the `Authorization` header.
-* It confirms that the token is a JWT that has been signed using the RS256 algorithm with a specific public key
-* It obtains the public key by inspecting the configuration returned by a configured JWKS endpoint
-* It also ensures that the JWT has the required Issuer (`iss` claim) and Audience (`aud` claim)
+- It confirms that an OAuth2 bearer token has been passed via the `Authorization` header.
+- It confirms that the token is a JWT that has been signed using the RS256 algorithm with a specific public key
+- It obtains the public key by inspecting the configuration returned by a configured JWKS endpoint
+- It also ensures that the JWT has the required Issuer (`iss` claim) and Audience (`aud` claim)
 
 ## Setup
 
@@ -48,9 +48,11 @@ cp .env.sample .env
 ### Environment Variables
 
 Modify the `.env`:
-* `TOKEN_ISSUER`: The issuer of the token. If you're using Auth0 as the token issuer, this would be: `https://your-tenant.auth0.com/`
-* `JWKS_URI`: This is the URL of the associated JWKS endpoint. If you are using Auth0 as the token issuer, this would be: `https://your-tenant.auth0.com/.well-known/jwks.json`
-* `AUDIENCE`: This is the required audience of the token. If you are using Auth0 as the Authorization Server, the audience value is the same thing as your API **Identifier** for the specific API in your [APIs section]((https://manage.auth0.com/#/apis)).
+
+- `TOKEN_ISSUER`: The issuer of the token. If you're using Auth0 as the token issuer, this would be: `https://your-tenant.auth0.com/`
+- `JWKS_URI`: This is the URL of the associated JWKS endpoint. If you are using Auth0 as the token issuer, this would be: `https://your-tenant.auth0.com/.well-known/jwks.json`
+- `PUBLIC_KEY`: This is the public key for the RSA key that we use to sign our own JWT's in the NextJS backend.
+- `AUDIENCE`: This is the required audience of the token. If you are using Auth0 as the Authorization Server, the audience value is the same thing as your API **Identifier** for the specific API in your [APIs section](<(https://manage.auth0.com/#/apis)>).
 
 You can test the custom authorizer locally. You just need to obtain a valid JWT access token to perform the test. If you're using Auth0, see [these instructions](https://auth0.com/docs/tokens/access-token#how-to-get-an-access-token) on how to obtain one.
 
@@ -124,22 +126,18 @@ This will generate a local `custom-authorizer.zip` bundle (ZIP file) containing 
 
 Before we can create the Lambda function in AWS that will be used as the custom authorizer, we need to make sure we have an IAM role that has permissions to invoke the Lambda function.
 
-Before we create the role, we need to make sure we have an IAM policy  with the right permissions, which essentially allow for invoking Lambda functions. The policy JSON needs to look like this:
+Before we create the role, we need to make sure we have an IAM policy with the right permissions, which essentially allow for invoking Lambda functions. The policy JSON needs to look like this:
 
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "lambda:InvokeFunction"
-            ],
-            "Resource": [
-                "*"
-            ]
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["lambda:InvokeFunction"],
+      "Resource": ["*"]
+    }
+  ]
 }
 ```
 
@@ -155,23 +153,20 @@ Now in the AWS Console, go to your [IAM Roles](https://console.aws.amazon.com/ia
 6. Click the **Trust relationships** tab and click the **Edit trust relationship** button
 7. Update the policy document so it has this JSON:
 
-    ```json
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Service": [
-              "apigateway.amazonaws.com",
-              "lambda.amazonaws.com"
-            ]
-          },
-          "Action": "sts:AssumeRole"
-        }
-      ]
-    }
-    ```
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "Service": ["apigateway.amazonaws.com", "lambda.amazonaws.com"]
+         },
+         "Action": "sts:AssumeRole"
+       }
+     ]
+   }
+   ```
 
 8. Make note of the **Role ARN** value, which will be used in a later step
 
@@ -179,19 +174,19 @@ Now in the AWS Console, go to your [IAM Roles](https://console.aws.amazon.com/ia
 
 Now we can finally create the lamda function itself in AWS. Start by going to [create a new blank function](https://console.aws.amazon.com/lambda/home#/create?step=2), then click **Next**. Your new function will have the following configuration:
 
-* Name: `jwtRsaCustomAuthorizer`
-* Description: `JWT RSA Custom Authorizer`
-* Runtime: `Node.js 8.10`
-* _Lambda function code_
-    * Code entry type: `Update a .ZIP file`
-    * Function package: (upload the `custom-authorizer.zip` file created earlier)
-    * Environment variables: (create variables with the same _Key_ and _Value_ as the list in the [Environment Variables](#environment-variables) section above)
-* _Lambda function handler and role_
-    * Handler: `index.handler` (default)
-    * Role: `Choose an existing role`
-    * Existing role: `Custom-Authorizer-Role` (same role created earlier)
-* _Advanced Settings_
-    * Timeout: `30` seconds
+- Name: `jwtRsaCustomAuthorizer`
+- Description: `JWT RSA Custom Authorizer`
+- Runtime: `Node.js 8.10`
+- _Lambda function code_
+  - Code entry type: `Update a .ZIP file`
+  - Function package: (upload the `custom-authorizer.zip` file created earlier)
+  - Environment variables: (create variables with the same _Key_ and _Value_ as the list in the [Environment Variables](#environment-variables) section above)
+- _Lambda function handler and role_
+  - Handler: `index.handler` (default)
+  - Role: `Choose an existing role`
+  - Existing role: `Custom-Authorizer-Role` (same role created earlier)
+- _Advanced Settings_
+  - Timeout: `30` seconds
 
 Click **Next** and then **Create function** to create the lambda function.
 
@@ -214,12 +209,13 @@ You should see similar output to what you observed when [testing the lambda loca
 3. Click **Create** > **Custom Authorizer**
 
 4. Use the following values in the **New Custom Authorizer** form:
-   * Lambda region: (same as lambda function created above)
-   * Lambda function: `jwtRsaCustomAuthorizer`
-   * Authorizer name: `jwt-rsa-custom-authorizer`
-   * Execution role: (**Role ARN** from the [Create the IAM role](#create-the-iam-role) section)
-   * Token validation expression: `^Bearer [-0-9a-zA-Z\._]*$`
-   * Result TTL in seconds: `3600`
+
+   - Lambda region: (same as lambda function created above)
+   - Lambda function: `jwtRsaCustomAuthorizer`
+   - Authorizer name: `jwt-rsa-custom-authorizer`
+   - Execution role: (**Role ARN** from the [Create the IAM role](#create-the-iam-role) section)
+   - Token validation expression: `^Bearer [-0-9a-zA-Z\._]*$`
+   - Result TTL in seconds: `3600`
 
 5. Click **Create**
 
@@ -279,17 +275,18 @@ You need to Deploy the API to make the changes public.
 ### Test your API Gateway endpoint remotely
 
 In the examples below:
-* `INVOKE_URL` is the **Invoke URL** from the [Deploy the API Gateway](#deploy-the-api-gateway) section above
-* `ACCESS_TOKEN` is the token in the `event.json` file
-* `/your/resource` is the resource you secured in AWS API Gateway
+
+- `INVOKE_URL` is the **Invoke URL** from the [Deploy the API Gateway](#deploy-the-api-gateway) section above
+- `ACCESS_TOKEN` is the token in the `event.json` file
+- `/your/resource` is the resource you secured in AWS API Gateway
 
 #### With Postman
 
 You can use Postman to test the REST API
 
-* Method: (matching the Method in API Gateway, eg. `GET`)
-* URL: `INVOKE_URL/your/resource`
-* Headers tab: Add an `Authorization` header with the value `Bearer ACCESS_TOKEN`
+- Method: (matching the Method in API Gateway, eg. `GET`)
+- URL: `INVOKE_URL/your/resource`
+- Headers tab: Add an `Authorization` header with the value `Bearer ACCESS_TOKEN`
 
 #### With curl from the command line
 
@@ -307,19 +304,18 @@ The above command is performed using the `GET` method.
 fetch( 'INVOKE_URL/your/resource', { method: 'GET', headers: { Authorization : 'Bearer ACCESS_TOKEN' }}).then(response => { console.log( response );});
 ```
 
-
 ---
 
 ## What is Auth0?
 
 Auth0 helps you to:
 
-* Add authentication with [multiple authentication sources](https://docs.auth0.com/identityproviders), either social like **Google, Facebook, Microsoft Account, LinkedIn, GitHub, Twitter, Box, Salesforce, amongst others**, or enterprise identity systems like **Windows Azure AD, Google Apps, Active Directory, ADFS or any SAML Identity Provider**.
-* Add authentication through more traditional **[username/password databases](https://docs.auth0.com/mysql-connection-tutorial)**.
-* Add support for **[linking different user accounts](https://docs.auth0.com/link-accounts)** with the same user.
-* Support for generating signed [Json Web Tokens](https://docs.auth0.com/jwt) to call your APIs and **flow the user identity** securely.
-* Analytics of how, when and where users are logging in.
-* Pull data from other sources and add it to the user profile, through [JavaScript rules](https://docs.auth0.com/rules).
+- Add authentication with [multiple authentication sources](https://docs.auth0.com/identityproviders), either social like **Google, Facebook, Microsoft Account, LinkedIn, GitHub, Twitter, Box, Salesforce, amongst others**, or enterprise identity systems like **Windows Azure AD, Google Apps, Active Directory, ADFS or any SAML Identity Provider**.
+- Add authentication through more traditional **[username/password databases](https://docs.auth0.com/mysql-connection-tutorial)**.
+- Add support for **[linking different user accounts](https://docs.auth0.com/link-accounts)** with the same user.
+- Support for generating signed [Json Web Tokens](https://docs.auth0.com/jwt) to call your APIs and **flow the user identity** securely.
+- Analytics of how, when and where users are logging in.
+- Pull data from other sources and add it to the user profile, through [JavaScript rules](https://docs.auth0.com/rules).
 
 ## Create a free account in Auth0
 
