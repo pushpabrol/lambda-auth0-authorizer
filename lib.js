@@ -48,8 +48,8 @@ module.exports.authenticate = (params) => {
   const token = getToken(params);
 
   const decoded = jwt.decode(token, { complete: true });
-  if (!decoded || !decoded.header || !decoded.header.kid) {
-    throw new Error("invalid token");
+  if (!decoded || !decoded.header) {
+    throw new Error("invalid token!");
   }
 
   let signingKeyPromise;
