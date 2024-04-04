@@ -44,6 +44,7 @@ const jwtOptions = {
 };
 
 module.exports.authenticate = (params) => {
+  console.log("Authenticate. v: 1.0.0");
   console.log(params);
   const token = getToken(params);
 
