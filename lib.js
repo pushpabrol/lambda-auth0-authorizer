@@ -62,7 +62,9 @@ module.exports.authenticate = (params) => {
     );
   } else {
     // Otherwise, this is a JWT we've issued ourselves, so we can use the public key we have
-    signingKeyPromise = Promise.resolve(process.env.PUBLIC_KEY);
+    signingKeyPromise = Promise.resolve(
+      process.env.PUBLIC_KEY.replace(/\\n/g, "\n")
+    );
   }
 
   return signingKeyPromise
