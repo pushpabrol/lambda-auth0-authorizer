@@ -21,7 +21,7 @@ const getPolicyDocument = (effect, resource) => {
 // extract and return the Bearer Token from the Lambda event parameters
 const getToken = (params) => {
   if (!params.type || params.type !== "TOKEN") {
-    throw new Error('Expected "event.type" parameter to have value "TOKEN"..');
+    throw new Error('Expected "event.type" parameter to have value "TOKEN"');
   }
 
   const tokenString = params.authorizationToken;
@@ -44,13 +44,12 @@ const jwtOptions = {
 };
 
 module.exports.authenticate = (params) => {
-  console.log("Authenticate. v: 1.0.0");
   console.log(params);
   const token = getToken(params);
 
   const decoded = jwt.decode(token, { complete: true });
   if (!decoded || !decoded.header) {
-    throw new Error("invalid token!");
+    throw new Error("invalid token");
   }
 
   let signingKeyPromise;
