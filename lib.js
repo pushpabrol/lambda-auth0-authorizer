@@ -6,10 +6,10 @@ const util = require("util");
 
 const getPolicyDocument = (effect, resource) => {
   const policyDocument = {
-    Version: "2012-10-17", // default version
+    Version: "2012-10-17",
     Statement: [
       {
-        Action: "execute-api:Invoke", // default action
+        Action: "execute-api:Invoke",
         Effect: effect,
         Resource: resource,
       },
@@ -38,12 +38,37 @@ const getToken = (params) => {
   return match[1];
 };
 
-const jwtOptions = {
-  audience: process.env.AUDIENCE,
-  issuer: process.env.TOKEN_ISSUER,
+const tokenConfigs = {
+  default: {
+    audience: process.env.AUDIENCE,
+    issuer: process.env.TOKEN_ISSUER,
+    jwksUri: process.env.JWKS_URI,
+    publicKey: process.env.PUBLIC_KEY,
+  },
+  external_api_token: {
+    audience: process.env.AUDIENCE,
+    issuer: process.env.AUTH0_EXTERNAL_API_TOKEN_ISSUER,
+    jwksUri: process.env.EXTERNAL_API_JWKS_URI,
+    publicKey: process.env.EXTERNAL_API_JWT_PUBLIC_KEY,
+  },
 };
 
-module.exports.authenticate = (params) => {
+const clients = {
+  default: jwksClient({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 10,
+    jwksUri: tokenConfigs.default.jwksUri,
+  }),
+  external_api_token: jwksClient({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 10,
+    jwksUri: tokenConfigs.external_api_token.jwksUri,
+  }),
+};
+
+module.exports.authenticate = async (params) => {
   console.log(params);
   const token = getToken(params);
 
@@ -52,35 +77,41 @@ module.exports.authenticate = (params) => {
     throw new Error("invalid token");
   }
 
-  let signingKeyPromise;
+  let tokenType = 'default';
+  // Determine token type based on issuer or other criteria
+  if (decoded.payload.iss === tokenConfigs.external_api_token.issuer) {
+    tokenType = 'external_api_token';
+  }
 
+  const config = tokenConfigs[tokenType];
+  const client = clients[tokenType];
+
+  let signingKey;
+
+  // If a kid was provided, this comes from Auth0. Get the public key from the authorization server
   if (decoded.header.kid) {
-    // If a kid was provided, this comes from Auth0. Get the public key from the authorization server
     const getSigningKey = util.promisify(client.getSigningKey);
-    signingKeyPromise = getSigningKey(decoded.header.kid).then(
+    signingKey = getSigningKey(decoded.header.kid).then(
       (key) => key.publicKey || key.rsaPublicKey
     );
   } else {
-    // Otherwise, this is a JWT we've issued ourselves, so we can use the public key we have
-    signingKeyPromise = Promise.resolve(
-      process.env.PUBLIC_KEY.replace(/\\n/g, "\n")
-    );
+    signingKey = config.publicKey.replace(/\\n/g, "\n");
   }
 
-  return signingKeyPromise
-    .then((signingKey) => {
-      return jwt.verify(token, signingKey, jwtOptions);
-    })
-    .then((decoded) => ({
-      principalId: decoded.sub,
-      policyDocument: getPolicyDocument("Allow", params.methodArn),
-      context: { scope: decoded.scope },
-    }));
-};
+  const jwtOptions = {
+    audience: config.audience,
+    issuer: config.issuer,
+  };
 
-const client = jwksClient({
-  cache: true,
-  rateLimit: true,
-  jwksRequestsPerMinute: 10, // Default value
-  jwksUri: process.env.JWKS_URI,
-});
+  try {
+    const verified = await jwt.verify(token, signingKey, jwtOptions);
+    return {
+      principalId: verified.sub,
+      policyDocument: getPolicyDocument("Allow", params.methodArn),
+      context: { scope: verified.scope },
+    };
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    throw new Error('Invalid token');
+  }
+};
