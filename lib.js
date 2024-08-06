@@ -91,13 +91,12 @@ module.exports.authenticate = async (params) => {
   // If a kid was provided, this comes from Auth0. Get the public key from the authorization server
   if (decoded.header.kid) {
     const getSigningKey = util.promisify(client.getSigningKey);
-    signingKey = getSigningKey(decoded.header.kid).then(
+    signingKey = await getSigningKey(decoded.header.kid).then(
       (key) => key.publicKey || key.rsaPublicKey
     );
   } else {
     signingKey = config.publicKey.replace(/\\n/g, "\n");
   }
-
   const jwtOptions = {
     audience: config.audience,
     issuer: config.issuer,
