@@ -116,6 +116,12 @@ Now we're ready to deploy the custom authorizer to an AWS API Gateway.
 
 First we need to create a bundle file that we can upload to AWS:
 
+Run this command first to build the `node_modules` folder
+
+```bash
+npm install
+```
+
 ```bash
 npm run bundle
 ```
